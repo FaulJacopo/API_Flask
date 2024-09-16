@@ -1,7 +1,7 @@
 #auth.py
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask import current_app   # definisce il contesto del modulo
-from flask_login import login_user, login_required  # https://flask-login.readthedocs.io/en/latest/#flask_login.login_user
+from flask_login import login_user, login_required, logout_user, current_user  # https://flask-login.readthedocs.io/en/latest/#flask_login.login_user
 
 from models.conn import db
 from models.model import *
@@ -20,11 +20,15 @@ def login_post():
     password = request.form.get('password')
     remember = True if request.form.get('remember') else False
 
-    user = User.query.filter_by(email=email).first()
+    stmt = db.select(User).filter_by(email=email)
+    user = db.session.execute(stmt).scalar_one_or_none()
+    # user = User.query.filter_by(email=email).first()
 
     # check if the user actually exists
     # take the user-supplied password, hash it, and compare it to the hashed password in the database
+    current_app.logger.info(f'user {user}')
     if not user or not user.check_password(password):
+        current_app.logger.error(f' user {email} not logged with password {password}')
         flash('Please check your login details and try again.')
         return redirect(url_for('auth.login')) # if the user doesn't exist or password is wrong, reload the page
 
@@ -32,8 +36,11 @@ def login_post():
     login_user(user, remember=remember)
     return redirect(url_for('auth.profile')) 
 
+@auth.route('/logout')
+@login_required
 def logout():
-    return 'logout'
+    logout_user()
+    return 'Logout'
 
 @auth.route('/profile')
 @login_required
@@ -51,6 +58,7 @@ def signup_post():
     username = request.form["username"] #as an alternative use request.form.get("username")
     email = request.form["email"]    
     password = request.form["password"]
+    current_app.logger.debug(f'Password: "{password}"')
 
     if not username:
         flash('Invalid username')
@@ -64,8 +72,6 @@ def signup_post():
     
     user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
     if user: 
-        # if a user is found, we want to redirect back to signup page so user can try again
-        # display some kind of error
         flash('User with this email address already exists')
         return redirect(url_for('auth.signup'))
 

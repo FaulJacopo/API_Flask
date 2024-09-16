@@ -21,5 +21,12 @@
             <button type="submit" class="btn btn-primary">Submit</button>
         </form>
     </div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ messages[0] }}. Go to <a href="{{ url_for('auth.login') }}">login page</a>.
+            </div>
+        {% endif %}
+    {% endwith %}
 </div>
 {% endblock %}

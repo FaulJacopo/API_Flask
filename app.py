@@ -1,7 +1,8 @@
 from geopy.geocoders import Nominatim
-from flask_login import LoginManager
 import requests, json
-from flask import Flask, render_template, request
+from functools import wraps
+from flask import Flask, render_template, request, flash, redirect, url_for, abort
+from flask_login import login_user, login_required, logout_user, current_user, LoginManager
 from routes.auth import auth as bp_auth
 from models.conn import db
 from models.model import *
@@ -9,9 +10,28 @@ from flask_migrate import Migrate
 
 app = Flask(__name__)
 app.register_blueprint(bp_auth, url_prefix='/auth')
+
+app.config['SECRET_KEY'] = 'va che le bela basa storta strupia'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://flask_API_adm:Admin$00@localhost/flask_meteoAPI'
+
 migrate = Migrate(app, db)
 db.init_app(app)
+
+login_manager = LoginManager()
+login_manager.login_view = 'auth.login'
+login_manager.init_app(app)
+
+# Chiama init_db durante l'inizializzazione
+with app.app_context():
+    init_db()
+
+@login_manager.user_loader
+def load_user(user_id):
+    # since the user_id is just the primary key of our user table, use it in the query for the user
+    stmt = db.select(User).filter_by(id=user_id)
+    user = db.session.execute(stmt).scalar_one_or_none()
+    # return User.query.get(int(user_id))   # legacy
+    return user
 
 @app.route('/')
 def home():
@@ -72,18 +92,11 @@ def weather(city):
 def hello(username):
     return render_template('home.html', username=username)
 
-
-login_manager = LoginManager()
-login_manager.login_view = 'auth.login'
-login_manager.init_app(app)
-
-@login_manager.user_loader
-def load_user(user_id):
-    # since the user_id is just the primary key of our user table, use it in the query for the user
-    stmt = db.select(User).filter_by(id=user_id)
-    user = db.session.execute(stmt).scalar_one_or_none()
-    # return User.query.get(int(user_id))   # legacy
-    return user
+@app.route('/dashboard')
+@login_required
+@user_has_role('admin') # oppure @user_has_role('admin', 'moderator')
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
