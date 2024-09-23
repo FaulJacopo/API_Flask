@@ -6,6 +6,8 @@ from flask_login import login_user, login_required, logout_user, current_user, L
 from routes.auth import auth as bp_auth
 from models.conn import db
 from models.model import *
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
@@ -16,6 +18,19 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+
+
+class ProtectedModelView(ModelView):
+    def is_accessible(self):
+        return current_user.is_authenticated
+    
+    def inaccessible_callback(self, name, **kwargs):
+        # redirect to login page if user doesn't have access
+        return redirect(url_for('auth.login', next=request.url))
+
+
+admin = Admin(app, name='Admin dashboard', template_mode='bootstrap4')
+admin.add_view(ProtectedModelView(User, db.session))
 
 app.register_blueprint(bp_auth, url_prefix='/auth')
 
