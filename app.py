@@ -7,12 +7,17 @@ from routes.auth import auth as bp_auth
 from models.conn import db
 from models.model import *
 from flask_migrate import Migrate
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
-app.register_blueprint(bp_auth, url_prefix='/auth')
 
-app.config['SECRET_KEY'] = 'va che le bela basa storta strupia'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://flask_API_adm:Admin$00@localhost/flask_meteoAPI'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI')
+
+app.register_blueprint(bp_auth, url_prefix='/auth')
 
 migrate = Migrate(app, db)
 db.init_app(app)
