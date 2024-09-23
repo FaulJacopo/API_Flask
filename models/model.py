@@ -26,10 +26,11 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))  # Campo per la password criptata
 
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('users', lazy='dynamic'))
+    api_keys = db.relationship('ApiKey', backref='user', lazy='dynamic')
+    memes = db.relationship('Memes', backref='user', lazy='dynamic')
 
     def set_password(self, password):
         """Imposta la password criptata."""
-        
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8') 
 
     def check_password(self, password):
@@ -42,6 +43,25 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.username}, Password {self.password_hash}, Email {self.email}>'
     
+    def set_api_key(self, key_value):
+        """Imposta una chiave API personalizzata."""
+        new_key = ApiKey(user=self, value=key_value)
+        db.session.add(new_key)
+        db.session.commit()
+
+    def get_api_keys(self):
+        """Restituisce le chiavi API personalizzate dell'utente."""
+        return self.api_keys
+
+class ApiKey(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    value = db.Column(db.String(80), unique=True, nullable=False)
+
+class Memes(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    value = db.Column(db.String(80), nullable=False)
 
 class Request(db.Model):
     id = db.Column(db.Integer, primary_key=True)

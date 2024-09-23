@@ -1,4 +1,4 @@
-import requests, json, random, string
+import requests, json, random, string, uuid
 from functools import wraps
 from flask import Flask, render_template, request, flash, redirect, url_for, abort
 from flask_login import login_user, login_required, logout_user, current_user, LoginManager
@@ -58,6 +58,7 @@ meme_list = [
 
 admin = Admin(app, name='Admin dashboard', template_mode='bootstrap4')
 admin.add_view(ProtectedModelView(User, db.session))
+admin.add_view(ProtectedModelView(ApiKey, db.session))
 
 app.register_blueprint(bp_auth, url_prefix='/auth')
 
@@ -82,7 +83,7 @@ def load_user(user_id):
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    return redirect(url_for('auth.login')) 
 
 @app.route('/createuser', methods=["POST"])
 #def create_user(username, email, password):
@@ -115,13 +116,7 @@ def add_request_to_DB(request):
     db.session.commit()
     return "Aggiunto correttamente"
 
-@app.route('/weather', methods=["POST"])
-def weather_single():
-    values = request.json
-    city = values["city"]
-    return weather(city)
-
-@app.route('/meme/<text1>&<text2>')
+@app.route('/meme/<text1>&<text2>', methods=["GET"])
 def getMeme(text1, text2):
     random_meme = random.sample(meme_list, 1)
     text1 = str(text1).replace(" ", "+")
@@ -130,16 +125,15 @@ def getMeme(text1, text2):
     api_request = f"http://apimeme.com/meme?meme={random_meme.replace(']',"")}&top={text1}&bottom={text2}"
     return f'<img src="{api_request}" />'
 
-
-@app.route('/hello/<username>')
-def hello(username):
-    return render_template('home.html', username=username)
-
-@app.route('/dashboard')
-@login_required
-@user_has_role('admin') # oppure @user_has_role('admin', 'moderator')
-def admin_dashboard():
-    return render_template('admin_dashboard.html')
+@app.route('/api/data', methods=['GET'])
+def get_data():
+    send_key = request.headers.get('X-API-Key')
+    api_key = ApiKey.query.filter_by(value=send_key).first()
+    if api_key == send_key:
+        login_user(api_key.user)
+        return {'data': 'Success'}
+    else:
+        return {'error': 'Invalid API key'}, 401
 
 if __name__ == '__main__':
     app.run(debug=True)
