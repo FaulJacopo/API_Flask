@@ -1,10 +1,11 @@
-import requests, json, random, string, uuid
+import requests, json, random, string, uuid, urllib.request, array
 from functools import wraps
 from flask import Flask, render_template, request, flash, redirect, url_for, abort
 from flask_login import login_user, login_required, logout_user, current_user, LoginManager
 from routes.auth import auth as bp_auth
 from models.conn import db
 from models.model import *
+from sqlalchemy import desc
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from flask_migrate import Migrate
@@ -118,20 +119,36 @@ def add_request_to_DB(request):
 
 @app.route('/meme/<text1>&<text2>', methods=["GET"])
 def getMeme(text1, text2):
-    random_meme = random.sample(meme_list, 1)
-    text1 = str(text1).replace(" ", "+")
-    text2 = str(text2).replace(" ", "+")
-    random_meme = (str(random_meme).replace("'", "")).replace('[', "")
-    api_request = f"http://apimeme.com/meme?meme={random_meme.replace(']',"")}&top={text1}&bottom={text2}"
-    return f'<img src="{api_request}" />'
+    sent_key = request.headers.get('X-API-Key')
 
-@app.route('/api/data', methods=['GET'])
-def get_data():
-    send_key = request.headers.get('X-API-Key')
-    api_key = ApiKey.query.filter_by(value=send_key).first()
-    if api_key == send_key:
-        login_user(api_key.user)
-        return {'data': 'Success'}
+    if not sent_key:
+        if not current_user:
+            return {'error': 'No API-Key specified'}, 401
+        else:
+            sent_key = ApiKey.query.filter_by(user_id=current_user.id).first()
+            api_key = sent_key
+            sent_key = sent_key.value
+    else:
+        api_key = ApiKey.query.filter_by(value=sent_key).first()
+    
+    current_app.logger.error(f'API KEY: {api_key}, sent_key:{sent_key}')
+    
+    if api_key.value == sent_key:
+        login_user(api_key.get_user())
+        random_meme = random.sample(meme_list, 1)
+        text1 = str(text1).replace(" ", "+")
+        text2 = str(text2).replace(" ", "+")
+        random_meme = (str(random_meme).replace("'", "")).replace('[', "")
+        api_request = f"http://apimeme.com/meme?meme={random_meme.replace(']',"")}&top={text1}&bottom={text2}"
+
+        meme = Memes(user_id=api_key.user_id, value=api_request)
+        memes = db.session.execute(db.select(Memes).filter_by(user_id=current_user.id)).scalars()
+        db.session.add(meme)
+        db.session.commit()
+
+        current_app.logger.error(f'URL{api_request}')
+        current_app.logger.error(f'API KEY {api_key.value}')
+        return render_template('auth/profile.html', api_keys=[api_key], name=api_key.get_user().username.upper(), url_meme=api_request, memes=memes)
     else:
         return {'error': 'Invalid API key'}, 401
 

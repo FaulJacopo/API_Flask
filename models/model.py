@@ -58,6 +58,12 @@ class ApiKey(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     value = db.Column(db.String(80), unique=True, nullable=False)
 
+    def get_user(self):
+        return db.session.execute(db.select(User).filter_by(id=self.user_id)).scalars().first()
+    
+    def __repr__(self):
+        return f'ApiKey id:{self.id}, value:{self.value}, user:{self.get_user()}'
+
 class Memes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
