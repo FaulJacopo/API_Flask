@@ -19,7 +19,7 @@
     </div>
     <div class="col-mb-3">
         <p>You can generate a new MEME by filling the next two input text and then by clicking the yellow button!</p>
-        <form action="generate_meme" method="POST">
+        <form action="{{ url_for('auth.generate_meme') }}" method="POST">
             <input type="text" name="upper_text" class="mt-3 mb-3" placeholder="Upper Text" />
             <input type="text" name="lower_text" class="mt-3 mb-3" placeholder="Lower Text" />
             <button type="submit" class="btn btn-warning mt-2">GENERATE MEME</button>

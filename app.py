@@ -142,7 +142,7 @@ def getMeme(text1, text2):
         api_request = f"http://apimeme.com/meme?meme={random_meme.replace(']',"")}&top={text1}&bottom={text2}"
 
         meme = Memes(user_id=api_key.user_id, value=api_request)
-        memes = db.session.execute(db.select(Memes).filter_by(user_id=current_user.id)).scalars()
+        memes = db.session.execute(db.select(Memes).filter_by(user_id=current_user.id).order_by(desc(Memes.id))).scalars()
         db.session.add(meme)
         db.session.commit()
 
