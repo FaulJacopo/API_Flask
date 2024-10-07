@@ -3,7 +3,20 @@
 {% block title %}Hello{% endblock %}
 
 {% block content %}
-    <h2>Welcome {{ username }}</h2>
-    <br>
-    <img src="{{ url_for('static', filename='images/logo.png') }}">
+<div class="row">
+    <div class="col-mb-3">
+        <h2 class="fw-bold">MEME API</h2>
+    </div>
+</div>
+<div class="row">
+    <p class="mt-4">To use this API you need to know how to call it.</p><br><br>
+    <p class="p-4 bg-dark rounded" style="color: #fff; font-family: 'Cascadia Code';">
+        localhost:5000/meme/upperText&lowerText
+    </p>
+    <p>The Meme image will be choosen in a random way and display in an Image Viewer</p>
+    <center>
+        <img src="{{ url_for('static', filename='images/meme.jpg') }}" class="w-50 mt-3 mb-4">
+    </center>
+    <p>You can try to use our API in this website by clicking the link "Profile" in the top menu</p>
+</div>
 {% endblock %}

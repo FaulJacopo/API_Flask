@@ -1,8 +1,9 @@
 #auth.py
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, Response, Flask, app
 from flask import current_app   # definisce il contesto del modulo
 from flask_login import login_user, login_required, logout_user, current_user  # https://flask-login.readthedocs.io/en/latest/#flask_login.login_user
-
+import uuid, random
+from sqlalchemy import desc
 from models.conn import db
 from models.model import *
 
@@ -34,31 +35,50 @@ def login_post():
 
     # if the above check passes, then we know the user has the right credentials
     login_user(user, remember=remember)
-    return redirect(url_for('auth.profile')) 
+    return redirect(url_for('auth.base'))
+
+@auth.route('/home')
+@login_required
+def base():
+    return render_template('home.html') 
 
 @auth.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return 'Logout'
+    flash("You are successfully logout from this page!")
+    return render_template('auth/login.html')
 
 @auth.route('/profile')
 @login_required
 def profile():
-    return render_template('auth/profile.html', name=current_user.username)
+    api_keys = (User.query.filter_by(email=current_user.email).first()).get_api_keys()
+    memes = db.session.execute(db.select(Memes).filter_by(user_id=current_user.id).order_by(desc(Memes.id))).scalars()
+    name = current_user.username.upper()
+    return render_template('auth/profile.html', api_keys=api_keys, name=name, url_meme=None, memes=memes)
 
 @auth.route('/signup', methods=["GET"])
 def signup():
     return render_template('auth/signup.html')
 
+@auth.route('/generate_meme', methods=["POST"])
+def generate_meme():
+    upper_text = request.form["upper_text"]
+    lower_text = request.form["lower_text"]
+
+    if not upper_text:
+        upper_text = "upper_text"
+    if not lower_text:
+        lower_text = "lower_text"
+    return redirect(url_for('getMeme', text1=upper_text, text2=lower_text))
+
 @auth.route('/signup', methods=['POST'])
 def signup_post():
     # signup input validation and logic
     #TODO verify password strenght
-    username = request.form["username"] #as an alternative use request.form.get("username")
+    username = request.form["username"]
     email = request.form["email"]    
     password = request.form["password"]
-    current_app.logger.debug(f'Password: "{password}"')
 
     if not username:
         flash('Invalid username')
@@ -74,10 +94,14 @@ def signup_post():
     if user: 
         flash('User with this email address already exists')
         return redirect(url_for('auth.signup'))
+    
+    api_key = str(uuid.uuid4())
 
     user = User(username=username, email=email)
     user.set_password(password)  # Imposta la password criptata
+    user.set_api_key(api_key) # Imposta la nuova API Key
     db.session.add(user)  # equivalente a INSERT
     db.session.commit()
 
+    flash("You are now registered in this website!")
     return redirect(url_for('auth.login'))
