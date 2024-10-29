@@ -32,7 +32,9 @@ SQLALCHEMY_DATABASE_URI="mysql+pymysql://utenteMYSQL:passMYSQL@ipDB/nomeDB"
 @localhost/indrizzoVostraScelta"
 ```
 
-Per finire il tutto eseguire il comando:
+## INIZIALIZZAZIONE E AVVIO
+
+Per creare il DB ed avviare infine l'applicazione eseguire il semplice comando:
 
 ```
 flask run
