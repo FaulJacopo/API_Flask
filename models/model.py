@@ -74,6 +74,8 @@ class Request(db.Model):
     request = db.Column(db.String(100), unique=False, nullable=False)
 
 def init_db():  #nuovo stile
+
+    db.create_all()
     # Verifica se i ruoli esistono già
     if not db.session.execute(db.select(Role).filter_by(name='admin')).scalars().first():
         admin_role = Role(name='admin')

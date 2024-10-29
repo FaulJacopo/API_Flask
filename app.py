@@ -1,4 +1,4 @@
-import requests, json, random, string, uuid, urllib.request, array
+import json, random, string, uuid, urllib.request, array
 from functools import wraps
 from flask import Flask, render_template, request, flash, redirect, url_for, abort
 from flask_login import login_user, login_required, logout_user, current_user, LoginManager
