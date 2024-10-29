@@ -32,9 +32,8 @@ SQLALCHEMY_DATABASE_URI="mysql+pymysql://utenteMYSQL:passMYSQL@ipDB/nomeDB"
 @localhost/indrizzoVostraScelta"
 ```
 
-Per finire il tutto eseguire i comandi:
+Per finire il tutto eseguire il comando:
 
 ```
-flask db migrate
-flask db upgrade
+flask run
 ```
