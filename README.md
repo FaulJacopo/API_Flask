@@ -1,9 +1,9 @@
-## MEME API FLASK
+# MEME API FLASK
 
 Con questo progetto è possibile gestire un API con la possibilità di generare dei MEME con immagini casuali inserendo due testi a discrezione dell'utente.
 Tutti i MEME sono poi visualizzabili nella profilo dell'utente dove vi è anche la possibilità di visualizzare la propria API_KEY.
 
-### CONFIGURAZIONE
+## CONFIGURAZIONE
 
 La configurazione del progetto è molto semplice:
 - Clonare il repository in una cartella.
